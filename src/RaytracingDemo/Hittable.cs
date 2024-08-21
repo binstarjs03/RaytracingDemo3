@@ -15,18 +15,17 @@ public class Sphere(Vector center, double radius) : IHittable
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
         var oc = _center - incoming.Origin;
-        var a = Vector.Dot(in incoming.Direction, in incoming.Direction);
-        var b = -2 * Vector.Dot(in incoming.Direction, in oc);
-        var c = Vector.Dot(in oc, in oc) - (_radius * _radius);
-        var det = b * b - 4 * a * c;
+        var a = incoming.Direction.MagnitudeSqr;
+        var b = Vector.Dot(in incoming.Direction, in oc);
+        var c = oc.MagnitudeSqr - _radius * _radius;
+        var det = b * b - a * c;
         if (det < 0)
             goto NotHit;
         var detSqrt = Math.Sqrt(det);
-        var atwice = 2* a;
-        var intersection = (b - detSqrt) / atwice;
+        var intersection = (b - detSqrt) / a;
         if (!limit.Inside(intersection))
         {
-            intersection = (b + detSqrt) / atwice;
+            intersection = (b + detSqrt) / a;
             if (!limit.Inside(intersection))
                 goto NotHit;
         }
