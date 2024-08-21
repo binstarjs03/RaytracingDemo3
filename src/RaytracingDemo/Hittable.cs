@@ -31,7 +31,7 @@ public class Sphere(Vector center, double radius) : IHittable
         }
         var hitpoint = incoming.At(intersection);
         var normal = (hitpoint - _center) / _radius;
-        var isFront = Vector.Dot(incoming.Direction, normal) < 0;
+        var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
         info = new HitInfo(hitpoint, normal, distance: intersection, isFront);
         return true;
     NotHit:
@@ -40,11 +40,49 @@ public class Sphere(Vector center, double radius) : IHittable
 
     }
 }
-public readonly struct Triangle : IHittable
+
+public class TriMesh : IHittable
 {
-    public readonly Vector V0;
-    public readonly Vector V1;
-    public readonly Vector V2;
+    private Vector[] _positions;
+    private int[] _indices;
+
+    public TriMesh(Vector[] positions, int[] indices)
+    {
+        if (positions.Length % 3 != 0)
+            throw new ArgumentException("Vertex array must be divisible by 3", nameof(positions));
+        if (indices.Length % 3 != 0)
+            throw new ArgumentException("Index array must be divisible by 3", nameof(positions));
+        _positions = positions;
+        _indices = indices;
+    }
+
+    public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
+    {
+        var localLimit = limit;
+        var wasHit = false;
+        var localInfo = new HitInfo();
+        var tricount = _positions.Length / 3;
+        for (var i = 0; i < tricount; i++)
+            if (TriangleFromArray(i).Hit(in incoming, in localLimit, out localInfo))
+            {
+                localLimit = new Interval(localLimit.Min, localInfo.Distance);
+                wasHit = true;
+            }
+        info = localInfo;
+        return wasHit;
+    }
+
+    private Triangle TriangleFromArray(int i) => new(
+        ref _positions[_indices[i + 0]],
+        ref _positions[_indices[i + 1]],
+        ref _positions[_indices[i + 2]]);
+}
+
+public readonly ref struct Triangle(ref Vector v0, ref Vector v1, ref Vector v2)
+{
+    public readonly ref Vector V0 = ref v0;
+    public readonly ref Vector V1 = ref v1;
+    public readonly ref Vector V2 = ref v2;
 
     public Vector Normal => Vector.Cross(V1 - V0, V2 - V0);
 
@@ -60,10 +98,12 @@ public readonly struct Triangle : IHittable
 
         // find hitpoint between incoming ray and plane
         var d = -Vector.Dot(in normal, in V0);
-        var intersect = -(Vector.Dot(in normal, in incoming.Origin) + d) / nDotIn;
-        if (intersect < 0)
+        var intersection = -(Vector.Dot(in normal, in incoming.Origin) + d) / nDotIn;
+        if (intersection < 0)
             goto NoHit; // triangle is behind
-        var hitpoint = incoming.At(intersect);
+        if (!limit.Inside(intersection))
+            goto NoHit;
+        var hitpoint = incoming.At(intersection);
 
         // check if hitpoint is inside triangle
         var vedge = Vector.Zero; // vector between two vertices
@@ -92,7 +132,7 @@ public readonly struct Triangle : IHittable
             goto NoHit;
 
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, intersect, isFront);
+        info = new HitInfo(hitpoint, normal, intersection, isFront);
         return true;
 
     NoHit:
