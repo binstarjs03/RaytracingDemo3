@@ -1,0 +1,16 @@
+.vs
+bin
+obj
+x64
+Debug
+Release
+
+*.vcxproj.user
+*.exe
+*.pdb
+*.obj
+*.log
+*.ppm
+*.ilk
+
+tasks.json
