@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace RaytracingDemo;
 
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public readonly struct Interval(double min, double max)
 {
     public readonly double Min = min;
@@ -20,5 +23,15 @@ public readonly struct Interval(double min, double max)
     public bool InsideOrEq(double value)
     {
         return Min <= value && value <= Max;
+    }
+
+    public override string ToString()
+    {
+        return $"{Min}, {Max}";
+    }
+
+    private string GetDebuggerDisplay()
+    {
+        return ToString();
     }
 }

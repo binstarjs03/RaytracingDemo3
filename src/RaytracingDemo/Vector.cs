@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 namespace RaytracingDemo;
 
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public readonly struct Vector : IEquatable<Vector>
 {
     public readonly double X;
@@ -121,6 +123,11 @@ public readonly struct Vector : IEquatable<Vector>
     public static implicit operator Vector(double value)
     {
         return new Vector(value, value, value);
+    }
+
+    private string GetDebuggerDisplay()
+    {
+        return ToString();
     }
 }
 

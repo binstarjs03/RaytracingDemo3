@@ -7,10 +7,10 @@ public interface IHittable
     bool Hit(in Ray incoming, in Interval limit, out HitInfo info);
 }
 
-public class Sphere : IHittable
+public class Sphere(Vector center, double radius) : IHittable
 {
-    private Vector _center;
-    private double _radius;
+    private Vector _center = center;
+    private double _radius = radius;
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
@@ -22,11 +22,11 @@ public class Sphere : IHittable
         if (det < 0)
             goto NotHit;
         var detSqrt = Math.Sqrt(det);
-        var asqr = a * a;
-        var intersection = (b - detSqrt) / asqr;
+        var atwice = 2* a;
+        var intersection = (b - detSqrt) / atwice;
         if (!limit.Inside(intersection))
         {
-            intersection = (b + detSqrt) / asqr;
+            intersection = (b + detSqrt) / atwice;
             if (!limit.Inside(intersection))
                 goto NotHit;
         }
