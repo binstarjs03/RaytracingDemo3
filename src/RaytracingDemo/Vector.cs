@@ -41,7 +41,7 @@ public readonly struct Vector
 
     public static Vector Reflect(in Vector incoming, in Vector normal)
     {
-         return incoming - (normal * Dot(incoming, normal) * 2);
+        return incoming - (normal * Dot(incoming, normal) * 2);
     }
 
     public static Vector Refract(in Vector incoming, in Vector normal, double iorFrom, double iorTo)
@@ -95,5 +95,21 @@ public readonly struct Vector
     public static implicit operator Vector(double value)
     {
         return new Vector(value, value, value);
+    }
+}
+
+public static class VectorUtils
+{
+    public static Vector NextVectorOnHemisphere(this Random random, in Vector normal)
+    {
+        var theta = Math.Acos(1 - random.NextDouble()); // random longitude
+        var phi = Math.PI * 2 * random.NextDouble(); // random latitude
+        var x = Math.Sin(theta) * Math.Cos(phi);
+        var y = Math.Cos(theta);
+        var z = Math.Sin(theta) * Math.Sin(phi);
+        var n = normal;
+        var t = Vector.Cross(in n, new Vector(0, 1, 0));
+        var b = Vector.Cross(in n, in t);
+        return t * x + y * n + z * b;
     }
 }
