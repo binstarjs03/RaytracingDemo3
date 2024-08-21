@@ -4,45 +4,31 @@ using System.IO;
 
 namespace RaytracingDemo;
 
-public readonly struct RenderStream(StreamWriter composite, StreamWriter normal)
-{
-    public readonly StreamWriter Composite = composite;
-    public readonly StreamWriter Normal = normal;
-
-    public readonly void WriteHeader(int rasterWidth, int rasterHeight)
-    {
-        Composite.WriteLine("P3");
-        Composite.WriteLine($"{rasterWidth} {rasterHeight}");
-        Composite.WriteLine("255");
-        Normal.WriteLine("P3");
-        Normal.WriteLine($"{rasterWidth} {rasterHeight}");
-        Normal.WriteLine("255");
-    }
-}
-
 public interface IRenderer
 {
-    void Render(in RenderStream stream, ref readonly Camera camera, IEnumerable<IHittable> hittables);
+    void Render(ref readonly Camera camera, IEnumerable<IHittable> hittables);
 }
 
 public class Renderer : IRenderer
 {
-    public void Render(in RenderStream stream, ref readonly Camera camera, IEnumerable<IHittable> hittables)
+    public void Render(ref readonly Camera camera, IEnumerable<IHittable> hittables)
     {
-        stream.WriteHeader(camera.RasterWidth, camera.RasterHeight);
         for (var rasterY = 0; rasterY < camera.RasterHeight; rasterY++)
             for (var rasterX = 0; rasterX < camera.RasterWidth; rasterX++)
             {
+                var index = rasterX + rasterY * camera.RasterWidth;
+                ref var diffuseRaster = ref camera.Framebuffer.DiffuseBuffer[index];
+                ref var normalRaster = ref camera.Framebuffer.NormalBuffer[index];
                 var cameraRay = GenerateCameraRay(rasterX, rasterY, in camera);
                 if (TryIntersectNearest(in cameraRay, hittables, out var info))
                 {
-                    stream.Composite.WriteColor(Vector.Unit);
-                    stream.Normal.WriteColor((info.Normal + 1) * 0.5);
+                    diffuseRaster = Vector.Unit;
+                    normalRaster = (info.Normal + 1) * 0.5;
                 }
                 else
                 {
-                    stream.Composite.WriteColor(new Vector((double)rasterX / camera.RasterWidth, (double)rasterY / camera.RasterHeight, 0));
-                    stream.Normal.WriteColor(Vector.Zero);
+                    diffuseRaster = new Vector((double)rasterX / camera.RasterWidth, (double)rasterY / camera.RasterHeight, 0);
+                    normalRaster = Vector.Zero;
                 }
             }
     }

@@ -1,0 +1,31 @@
+using System.IO;
+
+namespace RaytracingDemo;
+
+public class Framebuffer(int width, int height)
+{
+    public readonly int Width = width;
+    public readonly int Height = height;
+    public readonly Vector[] DiffuseBuffer = new Vector[width * height];
+    public readonly Vector[] NormalBuffer = new Vector[width * height];
+
+    public void ExportToPPM(StreamWriter diffuseWriter, StreamWriter normalWriter)
+    {
+        WriteHeader(diffuseWriter);
+        WriteHeader(normalWriter);
+        for (var y = 0; y < Height; y++)
+            for (var x = 0; x < Width; x++)
+            {
+                var index = x + y * Width;
+                diffuseWriter.WriteColor(in DiffuseBuffer[index]);
+                normalWriter.WriteColor(in NormalBuffer[index]);
+            }
+    }
+    
+    private void WriteHeader(StreamWriter writer)
+    {
+        writer.WriteLine("P3");
+        writer.WriteLine($"{Width} {Height}");
+        writer.WriteLine("255");
+    }
+}

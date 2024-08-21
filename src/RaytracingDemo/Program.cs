@@ -7,15 +7,6 @@ class Program
 
     static void Main(string[] args)
     {
-        // setup outputs
-        using var composite = new StreamWriter("outComposite.ppm");
-        using var normal = new StreamWriter("outNormal.ppm");
-
-        // setup render config
-        var stream = new RenderStream(composite, normal);
-        var renderer = new Renderer();
-        var camera = new Camera(512, 512, 90, Transformation.Default);
-
         // populate the scene
         Vector[] positions =
         {
@@ -34,7 +25,21 @@ class Program
             new TriMesh(positions, indices),
         };
 
+        // setup render config
+        var width = 16;
+        var height = 9;
+        var multiplier = 40;
+        var framebuffer = new Framebuffer(width * multiplier, height * multiplier);
+        var renderer = new Renderer();
+        var fov = 90;
+        var camera = new Camera(framebuffer, fov, Transformation.Default);
+
         // hit F12
-        renderer.Render(in stream, ref camera, hittables);
+        renderer.Render(ref camera, hittables);
+        
+        // setup outputs
+        using var diffuseWriter = new StreamWriter("outDiffuse.ppm");
+        using var normalWriter = new StreamWriter("outNormal.ppm");
+        framebuffer.ExportToPPM(diffuseWriter, normalWriter);
     }
 }

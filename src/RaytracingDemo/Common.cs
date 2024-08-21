@@ -8,4 +8,6 @@ public static class Common
     {
         return degree * Math.PI / 180;
     }
+
+    public static readonly double Bias = 0.001;
 }
