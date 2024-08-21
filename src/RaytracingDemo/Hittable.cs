@@ -63,10 +63,11 @@ public class TriMesh : IHittable
         var localInfo = new HitInfo();
         var tricount = _positions.Length / 3;
         for (var i = 0; i < tricount; i++)
-            if (TriangleFromArray(i).Hit(in incoming, in localLimit, out localInfo))
+            if (TriangleFromArray(i).Hit(in incoming, in localLimit, out var tempInfo))
             {
                 localLimit = new Interval(localLimit.Min, localInfo.Distance);
                 wasHit = true;
+                localInfo = tempInfo;
             }
         info = localInfo;
         return wasHit;
@@ -84,7 +85,7 @@ public readonly ref struct Triangle(ref Vector v0, ref Vector v1, ref Vector v2)
     public readonly ref Vector V1 = ref v1;
     public readonly ref Vector V2 = ref v2;
 
-    public Vector Normal => Vector.Cross(V1 - V0, V2 - V0);
+    public Vector Normal => Vector.Cross(V1 - V0, V2 - V0).Normalized;
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
@@ -92,7 +93,7 @@ public readonly ref struct Triangle(ref Vector v0, ref Vector v1, ref Vector v2)
 
         // check if incoming ray is parallel to the plane or perpendicular to normal
         var nDotIn = Vector.Dot(in normal, in incoming.Direction);
-        var isParallel = nDotIn < double.Epsilon;
+        var isParallel = Math.Abs(nDotIn) < double.Epsilon;
         if (isParallel)
             goto NoHit;
 

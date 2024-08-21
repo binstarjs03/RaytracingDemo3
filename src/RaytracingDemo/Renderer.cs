@@ -47,22 +47,23 @@ public class Renderer : IRenderer
             }
     }
 
-    private bool TryIntersectNearest(in Ray ray, IEnumerable<IHittable> hittables, out HitInfo info)
+    private static bool TryIntersectNearest(in Ray ray, IEnumerable<IHittable> hittables, out HitInfo info)
     {
         var limit = new Interval(0.001, double.PositiveInfinity);
         var wasHit = false;
-        var tempInfo = new HitInfo();
+        var localInfo = new HitInfo();
         foreach (var hittable in hittables)
-            if (hittable.Hit(in ray, in limit, out tempInfo))
+            if (hittable.Hit(in ray, in limit, out var tempInfo))
             {
                 limit = new Interval(limit.Min, tempInfo.Distance);
                 wasHit = true;
+                localInfo = tempInfo;
             }
-        info = tempInfo;
+        info = localInfo;
         return wasHit;
     }
 
-    private Ray GenerateCameraRay(int rasterX, int rasterY, ref readonly Camera camera)
+    private static Ray GenerateCameraRay(int rasterX, int rasterY, ref readonly Camera camera)
     {
         // conventionally:
         // - focus length is 1
