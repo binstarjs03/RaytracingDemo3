@@ -1,47 +1,56 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace RaytracingDemo;
 
+public readonly struct RenderOption(Interval cullInterval)
+{
+    public readonly Interval CullInterval = cullInterval;
+}
+
 public interface IRenderer
 {
-    void Render(ref readonly Camera camera, IEnumerable<IHittable> hittables);
+    void Render(ref readonly Camera camera, in RenderOption option, IEnumerable<IHittable> hittables);
 }
 
 public class Renderer : IRenderer
 {
-    public void Render(ref readonly Camera camera, IEnumerable<IHittable> hittables)
+    public void Render(ref readonly Camera camera, in RenderOption option, IEnumerable<IHittable> hittables)
     {
+        var minCull = option.CullInterval.Min;
+        var maxCull = option.CullInterval.Max;
         for (var rasterY = 0; rasterY < camera.RasterHeight; rasterY++)
             for (var rasterX = 0; rasterX < camera.RasterWidth; rasterX++)
             {
                 var index = rasterX + rasterY * camera.RasterWidth;
                 ref var diffuseRaster = ref camera.Framebuffer.DiffuseBuffer[index];
                 ref var normalRaster = ref camera.Framebuffer.NormalBuffer[index];
+                ref var zRaster = ref camera.Framebuffer.ZBuffer[index];
                 var cameraRay = GenerateCameraRay(rasterX, rasterY, in camera);
-                if (TryIntersectNearest(in cameraRay, hittables, out var info))
+                if (TryIntersectNearest(in cameraRay, in option.CullInterval, hittables, out var info))
                 {
                     diffuseRaster = Vector.Unit;
                     normalRaster = (info.Normal + 1) * 0.5;
+                    zRaster = (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
                 }
                 else
                 {
                     diffuseRaster = new Vector((double)rasterX / camera.RasterWidth, (double)rasterY / camera.RasterHeight, 0);
                     normalRaster = Vector.Zero;
+                    zRaster = Vector.Zero;
                 }
             }
     }
 
-    private static bool TryIntersectNearest(in Ray ray, IEnumerable<IHittable> hittables, out HitInfo info)
+    private static bool TryIntersectNearest(in Ray ray, in Interval cullLimit, IEnumerable<IHittable> hittables, out HitInfo info)
     {
-        var limit = new Interval(0.001, double.PositiveInfinity);
+        var localLimit = cullLimit;
         var wasHit = false;
         var localInfo = new HitInfo();
         foreach (var hittable in hittables)
-            if (hittable.Hit(in ray, in limit, out var tempInfo))
+            if (hittable.Hit(in ray, in localLimit, out var tempInfo))
             {
-                limit = new Interval(limit.Min, tempInfo.Distance);
+                localLimit = new Interval(localLimit.Min, tempInfo.Distance);
                 wasHit = true;
                 localInfo = tempInfo;
             }
