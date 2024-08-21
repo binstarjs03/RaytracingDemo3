@@ -1,7 +1,8 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 namespace RaytracingDemo;
 
-public readonly struct Vector
+public readonly struct Vector : IEquatable<Vector>
 {
     public readonly double X;
     public readonly double Y;
@@ -20,11 +21,6 @@ public readonly struct Vector
     public readonly Vector Normalized => this / Magnitude;
     public readonly double MagnitudeSqr => X * X + Y * Y + Z * Z;
     public readonly double Magnitude => Math.Sqrt(MagnitudeSqr);
-
-    public override string ToString()
-    {
-        return $"{X}, {Y}, {Z}";
-    }
 
     public static double Dot(in Vector left, in Vector right)
     {
@@ -47,6 +43,36 @@ public readonly struct Vector
     public static Vector Refract(in Vector incoming, in Vector normal, double iorFrom, double iorTo)
     {
         throw new NotImplementedException();
+    }
+
+    public override string ToString()
+    {
+        return $"{X}, {Y}, {Z}";
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is Vector vector && Equals(vector);
+    }
+
+    public bool Equals(Vector other)
+    {
+        return X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z);
+    }
+
+    public static bool operator ==(Vector left, Vector right)
+    {
+        return left.Equals(right);
+    }
+    
+    public static bool operator !=(Vector left, Vector right)
+    {
+        return !(left == right);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(X.GetHashCode(), Y.GetHashCode(), Z.GetHashCode());
     }
 
     // unary
@@ -108,8 +134,11 @@ public static class VectorUtils
         var y = Math.Cos(theta);
         var z = Math.Sin(theta) * Math.Sin(phi);
         var n = normal;
-        var t = Vector.Cross(in n, new Vector(0, 1, 0));
+        var up = new Vector(0, 1, 0);
+        var right = new Vector(1, 0, 0);
+        var t = Vector.Cross(in n, n != up ? up : right);
         var b = Vector.Cross(in n, in t);
-        return t * x + y * n + z * b;
+        var result = t * x + y * n + z * b;
+        return result;
     }
 }
