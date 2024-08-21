@@ -11,4 +11,14 @@ public readonly struct Interval(double min, double max)
         if (value > Max) return Max;
         return value;
     }
+
+    public bool Inside(double value)
+    {
+        return Min < value && value < Max;
+    }
+
+    public bool InsideOrEq(double value)
+    {
+        return Min <= value && value <= Max;
+    }
 }
