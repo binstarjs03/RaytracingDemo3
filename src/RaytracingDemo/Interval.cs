@@ -8,6 +8,9 @@ public readonly struct Interval(double min, double max)
     public readonly double Min = min;
     public readonly double Max = max;
 
+    public static Interval Universe => new(double.NegativeInfinity, double.PositiveInfinity);
+    public static Interval Nothing => new(double.PositiveInfinity, double.NegativeInfinity);
+
     public double Clamp(double value)
     {
         if (value < Min) return Min;
