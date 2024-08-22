@@ -95,12 +95,13 @@ public class TriMesh : IHittable
         var localLimit = limit;
         var wasHit = false;
         var localInfo = default(HitInfo);
-        var tricount = _positions.Length / 3;
+        var tricount = _indices.Length / 3;
         for (var i = 0; i < tricount; i++)
         {
-            ref var p0 = ref _positions[_indices[i + 0]];
-            ref var p1 = ref _positions[_indices[i + 1]];
-            ref var p2 = ref _positions[_indices[i + 2]];
+            var indexStart = i * 3;
+            ref var p0 = ref _positions[_indices[indexStart + 0]];
+            ref var p1 = ref _positions[_indices[indexStart + 1]];
+            ref var p2 = ref _positions[_indices[indexStart + 2]];
             if (Triangle.Hit(in incoming, in localLimit, in p0, in p1, in p2, out var tempInfo))
             {
                 localLimit = new Interval(localLimit.Min, localInfo.Distance);
