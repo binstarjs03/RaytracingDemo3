@@ -45,6 +45,7 @@ public class TriMesh : IHittable
 {
     private Vector[] _positions;
     private int[] _indices;
+    private BoundingBox _boundingBox;
 
     public TriMesh(Vector[] positions, int[] indices)
     {
@@ -54,6 +55,34 @@ public class TriMesh : IHittable
             throw new ArgumentException("Index array must be divisible by 3", nameof(positions));
         _positions = positions;
         _indices = indices;
+        _boundingBox = CalculateBoundingBox(positions);
+    }
+
+    private static BoundingBox CalculateBoundingBox(Vector[] positions)
+    {
+        var minX = double.PositiveInfinity;
+        var minY = double.PositiveInfinity;
+        var minZ = double.PositiveInfinity;
+        var maxX = double.NegativeInfinity;
+        var maxY = double.NegativeInfinity;
+        var maxZ = double.NegativeInfinity;
+        for (var i = 0; i < positions.Length; i++)
+        {
+            ref var point = ref positions[i];
+            if (point.X < minX)
+                minX = point.X;
+            if (point.Y < minY)
+                minY = point.Y;
+            if (point.Z < minZ)
+                minZ = point.Z;
+            if (point.X > maxX)
+                maxX = point.X;
+            if (point.Y > maxY)
+                maxY = point.Y;
+            if (point.Z > maxZ)
+                maxZ = point.Z;
+        }
+        return new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
