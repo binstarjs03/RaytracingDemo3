@@ -31,7 +31,7 @@ public class Renderer : IRenderer
                 {
                     diffuseRaster = Vector.Unit;
                     normalRaster = (info.Normal + 1) * 0.5;
-                    zRaster = (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
+                    zRaster = 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
                 }
                 else
                 {
