@@ -87,7 +87,7 @@ public class TriMesh : IHittable
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
-        if (!_boundingBox.Intersect(incoming))
+        if (!_boundingBox.Intersect(in incoming))
         {
             info = default;
             return false;
@@ -99,8 +99,8 @@ public class TriMesh : IHittable
         for (var i = 0; i < tricount; i++)
         {
             ref var p0 = ref _positions[_indices[i + 0]];
-            ref var p1 = ref _positions[_indices[i + 0]];
-            ref var p2 = ref _positions[_indices[i + 0]];
+            ref var p1 = ref _positions[_indices[i + 1]];
+            ref var p2 = ref _positions[_indices[i + 2]];
             if (Triangle.Hit(in incoming, in localLimit, in p0, in p1, in p2, out var tempInfo))
             {
                 localLimit = new Interval(localLimit.Min, localInfo.Distance);
