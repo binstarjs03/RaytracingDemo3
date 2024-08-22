@@ -35,7 +35,7 @@ public class Sphere(Vector center, double radius) : IHittable
         info = new HitInfo(hitpoint, normal, distance: intersection, isFront);
         return true;
     NotHit:
-        info = new HitInfo();
+        info = default;
         return false;
 
     }
@@ -89,7 +89,7 @@ public class TriMesh : IHittable
     {
         var localLimit = limit;
         var wasHit = false;
-        var localInfo = new HitInfo();
+        var localInfo = default(HitInfo);
         var tricount = _positions.Length / 3;
         for (var i = 0; i < tricount; i++)
         {

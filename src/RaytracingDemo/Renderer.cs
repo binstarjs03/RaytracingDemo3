@@ -46,7 +46,7 @@ public class Renderer : IRenderer
     {
         var localLimit = cullLimit;
         var wasHit = false;
-        var localInfo = new HitInfo();
+        var localInfo = default(HitInfo);
         foreach (var hittable in hittables)
             if (hittable.Hit(in ray, in localLimit, out var tempInfo))
             {
