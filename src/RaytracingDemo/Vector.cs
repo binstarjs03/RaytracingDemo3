@@ -4,18 +4,11 @@ using System.Diagnostics.CodeAnalysis;
 namespace RaytracingDemo;
 
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-public readonly struct Vector : IEquatable<Vector>
+public readonly struct Vector(double x, double y, double z) : IEquatable<Vector>
 {
-    public readonly double X;
-    public readonly double Y;
-    public readonly double Z;
-
-    public Vector(double x, double y, double z)
-    {
-        X = x;
-        Y = y;
-        Z = z;
-    }
+    public readonly double X = x;
+    public readonly double Y = y;
+    public readonly double Z = z;
 
     public static Vector Zero => new(0, 0, 0);
     public static Vector Unit => new(1, 1, 1);

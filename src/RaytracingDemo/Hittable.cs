@@ -37,7 +37,6 @@ public class Sphere(Vector center, double radius) : IHittable
     NotHit:
         info = default;
         return false;
-
     }
 }
 
@@ -141,14 +140,11 @@ public static class Triangle
         var hitpoint = incoming.At(intersection);
 
         // check if hitpoint is inside triangle
-        var vedge = Vector.Zero; // vector between two vertices
-        var vp = Vector.Zero; // vector between hitpoint and vertex
-        var vT = Vector.Zero; // vector perpendicular to triangle's plane
 
         // test for edge v01
-        vedge = p1 - p0;
-        vp = hitpoint - p0;
-        vT = Vector.Cross(in vedge, in vp);
+        var vedge = p1 - p0; // vector between two vertices
+        var vp = hitpoint - p0; // vector between hitpoint and vertex
+        var vT = Vector.Cross(in vedge, in vp); // vector perpendicular to triangle's plane
         if (Vector.Dot(in normal, in vT) < 0)
             goto NoHit;
 

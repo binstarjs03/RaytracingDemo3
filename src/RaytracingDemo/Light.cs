@@ -2,10 +2,10 @@ using System.Collections.Generic;
 
 namespace RaytracingDemo;
 
-public readonly struct LightSample
+public readonly struct LightSample(Vector attenuation, Vector direction)
 {
-    public Vector Attenuation { get; init; }
-    public Vector Direction { get; init; }
+    public readonly Vector Attenuation = attenuation;
+    public readonly Vector Direction = direction;
 }
 
 public interface ILight
@@ -43,11 +43,8 @@ public class PointLight : ILight
                 sample = default;
                 return false;
             }
-        sample = new LightSample
-        {
-            Attenuation = Color * Strength / pointToLight.MagnitudeSqr,
-            Direction = pointToLight
-        };
+        var attenuation = Color * Strength / pointToLight.MagnitudeSqr;
+        sample = new LightSample(attenuation , direction);
         return true;
     }
 }

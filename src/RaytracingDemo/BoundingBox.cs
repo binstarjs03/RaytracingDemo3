@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace RaytracingDemo;
 
+[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
 public readonly struct BoundingBox
 {
     public readonly Vector Min;
@@ -49,6 +52,16 @@ public readonly struct BoundingBox
             tmax = tzmax;
 
         return tmax >= 0;
+    }
+
+    public override string ToString()
+    {
+        return $"Min: {Min}; Max: {Max}";
+    }
+
+    private string GetDebuggerDisplay()
+    {
+        return ToString();
     }
 
     // public bool InsideOrEq(in Vector point)

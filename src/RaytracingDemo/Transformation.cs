@@ -10,7 +10,7 @@ public struct Transformation(in Vector position, in Vector rotation, in Vector s
 
     public static Transformation Default => new(Vector.Zero, Vector.Zero, Vector.Unit);
 
-    public Vector Transform(in Vector point)
+    public readonly Vector Transform(in Vector point)
     {
         // scale
         var x = point.X * Scale.X;
@@ -25,14 +25,10 @@ public struct Transformation(in Vector position, in Vector rotation, in Vector s
         var ycos = Math.Cos(Rotation.Y);
         var zcos = Math.Cos(Rotation.Z);
 
-        var xr = 0d;
-        var yr = 0d;
-        var zr = 0d;
-
         // rotate along x axis
-        xr = x;
-        yr = y * xcos - z * xsin;
-        zr = y * xsin + z * xcos;
+        var xr = x;
+        var yr = y * xcos - z * xsin;
+        var zr = y * xsin + z * xcos;
         x = xr;
         y = yr;
         z = zr;
@@ -61,7 +57,7 @@ public struct Transformation(in Vector position, in Vector rotation, in Vector s
         return new Vector(x, y, z);
     }
 
-    public Vector TransformInverse(in Vector point)
+    public readonly Vector TransformInverse(in Vector point)
     {
         // translate
         var x = point.X - Position.X;
@@ -76,14 +72,10 @@ public struct Transformation(in Vector position, in Vector rotation, in Vector s
         var ycos = Math.Cos(-Rotation.Y);
         var zcos = Math.Cos(-Rotation.Z);
 
-        var xr = 0d;
-        var yr = 0d;
-        var zr = 0d;
-
         // rotate along z axis
-        xr = x * zcos - y * zsin;
-        yr = x * zsin + y * zcos;
-        zr = z;
+        var xr = x * zcos - y * zsin;
+        var yr = x * zsin + y * zcos;
+        var zr = z;
         x = xr;
         y = yr;
         z = zr;
