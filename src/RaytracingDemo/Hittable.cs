@@ -92,81 +92,80 @@ public class TriMesh : IHittable
         var localInfo = new HitInfo();
         var tricount = _positions.Length / 3;
         for (var i = 0; i < tricount; i++)
-            if (TriangleFromArray(i).Hit(in incoming, in localLimit, out var tempInfo))
+        {
+            ref var p0 = ref _positions[_indices[i + 0]];
+            ref var p1 = ref _positions[_indices[i + 0]];
+            ref var p2 = ref _positions[_indices[i + 0]];
+            if (Triangle.Hit(in incoming, in localLimit, in p0, in p1, in p2, out var tempInfo))
             {
                 localLimit = new Interval(localLimit.Min, localInfo.Distance);
                 wasHit = true;
                 localInfo = tempInfo;
             }
+        }
         info = localInfo;
         return wasHit;
     }
-
-    private Triangle TriangleFromArray(int i) => new(
-        ref _positions[_indices[i + 0]],
-        ref _positions[_indices[i + 1]],
-        ref _positions[_indices[i + 2]]);
 }
 
-public readonly ref struct Triangle(ref Vector v0, ref Vector v1, ref Vector v2)
-{
-    public readonly ref Vector V0 = ref v0;
-    public readonly ref Vector V1 = ref v1;
-    public readonly ref Vector V2 = ref v2;
-
-    public Vector Normal => Vector.Cross(V1 - V0, V2 - V0).Normalized;
-
-    public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
+public static class Triangle
     {
-        var normal = Normal;
+        public static Vector Normal(in Vector p0, in Vector p1, in Vector p2)
+        {
+            return Vector.Cross(p1 - p0, p2 - p0).Normalized;
+        }
 
-        // check if incoming ray is parallel to the plane or perpendicular to normal
-        var nDotIn = Vector.Dot(in normal, in incoming.Direction);
-        var isParallel = Math.Abs(nDotIn) < double.Epsilon;
-        if (isParallel)
-            goto NoHit;
+        public static bool Hit(in Ray incoming, in Interval limit, in Vector p0, in Vector p1, in Vector p2, out HitInfo info)
+        {
+            var normal = Normal(in p0, in p1, in p2);
 
-        // find hitpoint between incoming ray and plane
-        var d = -Vector.Dot(in normal, in V0);
-        var intersection = -(Vector.Dot(in normal, in incoming.Origin) + d) / nDotIn;
-        if (intersection < 0)
-            goto NoHit; // triangle is behind
-        if (!limit.Inside(intersection))
-            goto NoHit;
-        var hitpoint = incoming.At(intersection);
+            // check if incoming ray is parallel to the plane or perpendicular to normal
+            var nDotIn = Vector.Dot(in normal, in incoming.Direction);
+            var isParallel = Math.Abs(nDotIn) < double.Epsilon;
+            if (isParallel)
+                goto NoHit;
 
-        // check if hitpoint is inside triangle
-        var vedge = Vector.Zero; // vector between two vertices
-        var vp = Vector.Zero; // vector between hitpoint and vertex
-        var vT = Vector.Zero; // vector perpendicular to triangle's plane
+            // find hitpoint between incoming ray and plane
+            var d = -Vector.Dot(in normal, in p0);
+            var intersection = -(Vector.Dot(in normal, in incoming.Origin) + d) / nDotIn;
+            if (intersection < 0)
+                goto NoHit; // triangle is behind
+            if (!limit.Inside(intersection))
+                goto NoHit;
+            var hitpoint = incoming.At(intersection);
 
-        // test for edge v01
-        vedge = V1 - V0;
-        vp = hitpoint - V0;
-        vT = Vector.Cross(in vedge, in vp);
-        if (Vector.Dot(in normal, in vT) < 0)
-            goto NoHit;
+            // check if hitpoint is inside triangle
+            var vedge = Vector.Zero; // vector between two vertices
+            var vp = Vector.Zero; // vector between hitpoint and vertex
+            var vT = Vector.Zero; // vector perpendicular to triangle's plane
 
-        // test for edge v12
-        vedge = V2 - V1;
-        vp = hitpoint - V1;
-        vT = Vector.Cross(in vedge, in vp);
-        if (Vector.Dot(in normal, in vT) < 0)
-            goto NoHit;
+            // test for edge v01
+            vedge = p1 - p0;
+            vp = hitpoint - p0;
+            vT = Vector.Cross(in vedge, in vp);
+            if (Vector.Dot(in normal, in vT) < 0)
+                goto NoHit;
 
-        // test for edge v20
-        vedge = V0 - V2;
-        vp = hitpoint - V2;
-        vT = Vector.Cross(in vedge, in vp);
-        if (Vector.Dot(in normal, in vT) < 0)
-            goto NoHit;
+            // test for edge v12
+            vedge = p2 - p1;
+            vp = hitpoint - p1;
+            vT = Vector.Cross(in vedge, in vp);
+            if (Vector.Dot(in normal, in vT) < 0)
+                goto NoHit;
 
-        var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, intersection, isFront);
-        return true;
+            // test for edge v20
+            vedge = p0 - p2;
+            vp = hitpoint - p2;
+            vT = Vector.Cross(in vedge, in vp);
+            if (Vector.Dot(in normal, in vT) < 0)
+                goto NoHit;
 
-    NoHit:
-        info = new HitInfo();
-        return false;
+            var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
+            info = new HitInfo(hitpoint, normal, intersection, isFront);
+            return true;
+
+        NoHit:
+            info = new HitInfo();
+            return false;
+        }
     }
-}
