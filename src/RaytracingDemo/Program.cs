@@ -43,22 +43,22 @@ class Program
         //     hittables.Add(new Sphere(new Vector(x, y, z), r));
         // }
 
-        // setup render config
-        var multiplier = 40;
-        var framebuffer = new Framebuffer(width: 10 * multiplier, height: 10 * multiplier);
-        var renderer = new Renderer();
-        var camera = new Camera(framebuffer, fieldOfView: 50, Transformation.Default);
-        var culling = new Interval(min: 0.1, max: 20);
-        var option = new RenderOption(culling);
-
         var lights = new List<ILight>
         {
             new PointLight(new Vector(0.6, 1.0, 0.0), Vector.Unit, 1.5),
             // new PointLight(new Vector(-1, 1, 1), Vector.Unit, 0.5),
         };
 
+        // setup render config
+        var multiplier = 40;
+        var framebuffer = new Framebuffer(width: 10 * multiplier, height: 10 * multiplier);
+        var renderer = new Renderer();
+        var camera = new Camera(fieldOfView: 50, Transformation.Default);
+        var culling = new Interval(min: 0.1, max: 20);
+        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, 10);
+        
         // hit F12
-        renderer.Render(ref camera, in option, hittables, lights);
+        renderer.Render(in option);
 
         // setup outputs
         using var diffuseWriter = new StreamWriter("outDiffuse.ppm");

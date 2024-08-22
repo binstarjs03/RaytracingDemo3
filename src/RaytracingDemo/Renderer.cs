@@ -3,31 +3,44 @@ using System.Collections.Generic;
 
 namespace RaytracingDemo;
 
-public readonly struct RenderOption(Interval cullInterval)
+public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in Interval culling, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights, int maxSamples)
 {
-    public readonly Interval CullInterval = cullInterval;
+    public readonly Camera Camera = camera;
+    public readonly Framebuffer Framebuffer = framebuffer;
+    public readonly Interval Culling = culling;
+    public readonly IEnumerable<IHittable> Hittables = hittables;
+    public readonly IEnumerable<ILight> Lights = lights;
+    public readonly int MaxSamples = maxSamples;
 }
 
 public interface IRenderer
 {
-    void Render(ref readonly Camera camera, in RenderOption option, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights);
+    void Render(in RenderOption option);
 }
 
 public class Renderer : IRenderer
 {
-    public void Render(ref readonly Camera camera, in RenderOption option, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights)
+    public void Render(in RenderOption option)
     {
-        var minCull = option.CullInterval.Min;
-        var maxCull = option.CullInterval.Max;
-        for (var rasterY = 0; rasterY < camera.RasterHeight; rasterY++)
-            for (var rasterX = 0; rasterX < camera.RasterWidth; rasterX++)
+        ref readonly var framebuffer = ref option.Framebuffer;
+        var hittables = option.Hittables;
+        var lights = option.Lights;
+        
+        var width = framebuffer.Width;
+        var height = framebuffer.Height;
+        
+        var minCull = option.Culling.Min;
+        var maxCull = option.Culling.Max;
+        
+        for (var rasterY = 0; rasterY < height; rasterY++)
+            for (var rasterX = 0; rasterX < width; rasterX++)
             {
-                var index = rasterX + rasterY * camera.RasterWidth;
-                ref var diffuseRaster = ref camera.Framebuffer.DiffuseBuffer[index];
-                ref var normalRaster = ref camera.Framebuffer.NormalBuffer[index];
-                ref var zRaster = ref camera.Framebuffer.ZBuffer[index];
-                var cameraRay = GenerateCameraRay(rasterX, rasterY, in camera);
-                if (TryIntersectNearest(in cameraRay, in option.CullInterval, hittables, out var info))
+                var index = rasterX + rasterY * framebuffer.Height;
+                ref var diffuseRaster = ref framebuffer.DiffuseBuffer[index];
+                ref var normalRaster = ref framebuffer.NormalBuffer[index];
+                ref var zRaster = ref framebuffer.ZBuffer[index];
+                var cameraRay = GenerateCameraRay(rasterX, rasterY, in option);
+                if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                 {
                     diffuseRaster = SampleDirect(in info, hittables, lights) + SampleIndirect(in info, hittables, lights);
                     normalRaster = (info.Normal + 1) * 0.5;
@@ -35,7 +48,7 @@ public class Renderer : IRenderer
                 }
                 else
                 {
-                    diffuseRaster = new Vector((double)rasterX / camera.RasterWidth, (double)rasterY / camera.RasterHeight, 0);
+                    diffuseRaster = new Vector((double)rasterX / width, (double)rasterY / framebuffer.Height, 0);
                     normalRaster = Vector.Zero;
                     zRaster = Vector.Zero;
                 }
@@ -72,19 +85,21 @@ public class Renderer : IRenderer
         return Vector.Zero;
     }
 
-    private static Ray GenerateCameraRay(int rasterX, int rasterY, ref readonly Camera camera)
+    private static Ray GenerateCameraRay(int rasterX, int rasterY, in RenderOption option)
     {
         // conventionally:
         // - focus length is 1
         // - screen length is 2, 1 for each half(-axis and +axis)
         // at screen length 2, fov is 90d
         // for arbitrary screen length, just use tan(fov)
+        ref readonly var camera = ref option.Camera;
+        ref readonly var framebuffer = ref option.Framebuffer;
         var fovrad = camera.FieldOfView.ToRadian();
         var screenLen = Math.Tan(fovrad / 2) * 2;
-        var aspectRatio = (double)camera.RasterWidth / camera.RasterHeight;
+        var aspectRatio = (double)framebuffer.Width / framebuffer.Height;
 
-        var xndc = (rasterX + 0.5) / camera.RasterWidth;
-        var yndc = (rasterY + 0.5) / camera.RasterHeight;
+        var xndc = (rasterX + 0.5) / framebuffer.Width;
+        var yndc = (rasterY + 0.5) / framebuffer.Height;
 
         var xscreen = (xndc * 2 - 1) * screenLen * aspectRatio;
         var yscreen = (1 - yndc * 2) * screenLen;
