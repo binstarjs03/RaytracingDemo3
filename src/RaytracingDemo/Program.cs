@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 namespace RaytracingDemo;
 
@@ -13,28 +14,50 @@ class Program
             new(-1, -1, -1),
             new( 1, -1, -1),
             new( 0,  1, -1),
+
+            new(-10, -1, -10),
+            new( 10, -1, -10),
+            new( 10, -1,  10),
+            new(-10, -1,  10),
+
         };
         int[] indices =
         {
             0, 1, 2,
+            5, 4, 3,
+            3, 6, 5,
         };
         var hittables = new List<IHittable>()
         {
             new Sphere(new Vector(0.0, 0.0, -1.0), radius: 0.5),
-            new Sphere(new Vector(0.5, 0.0, -1.0), radius: 0.5),
+            new Sphere(new Vector(0.5, 0.0, -1.0), radius: 0.25),
             new TriMesh(positions, indices),
         };
 
+        // for (int i = 0; i < 100; i++)
+        // {
+        //     var x = Random.Shared.NextDouble() * 10 - 5;
+        //     var y = Random.Shared.NextDouble() * 2;
+        //     var z = Random.Shared.NextDouble() * 10 - 5;
+        //     var r = Random.Shared.NextDouble() * 0.3 + 0.3;
+        //     hittables.Add(new Sphere(new Vector(x, y, z), r));
+        // }
+
         // setup render config
         var multiplier = 40;
-        var framebuffer = new Framebuffer(width: 16 * multiplier, height: 9 * multiplier);
+        var framebuffer = new Framebuffer(width: 10 * multiplier, height: 10 * multiplier);
         var renderer = new Renderer();
-        var camera = new Camera(framebuffer, fieldOfView: 90, Transformation.Default);
-        var culling = new Interval(min: 0.1, max: 5);
+        var camera = new Camera(framebuffer, fieldOfView: 60, Transformation.Default);
+        var culling = new Interval(min: 0.1, max: 20);
         var option = new RenderOption(culling);
 
+        var lights = new List<ILight>
+        {
+            new PointLight(new Vector(0.6, 1.0, 0), Vector.Unit, 1)
+        };
+
         // hit F12
-        renderer.Render(ref camera, in option, hittables);
+        renderer.Render(ref camera, in option, hittables, lights);
 
         // setup outputs
         using var diffuseWriter = new StreamWriter("outDiffuse.ppm");

@@ -32,7 +32,7 @@ public class Sphere(Vector center, double radius) : IHittable
         var hitpoint = incoming.At(intersection);
         var normal = (hitpoint - _center) / _radius;
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, distance: intersection, isFront);
+        info = new HitInfo(hitpoint, normal, distance: intersection, isFront, null);
         return true;
     NotHit:
         info = default;
@@ -167,7 +167,7 @@ public static class Triangle
             goto NoHit;
 
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, intersection, isFront);
+        info = new HitInfo(hitpoint, normal, intersection, isFront, null);
         return true;
 
     NoHit:
