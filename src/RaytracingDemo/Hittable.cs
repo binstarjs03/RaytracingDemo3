@@ -87,6 +87,11 @@ public class TriMesh : IHittable
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
+        if (!_boundingBox.Intersect(incoming))
+        {
+            info = default;
+            return false;
+        }
         var localLimit = limit;
         var wasHit = false;
         var localInfo = default(HitInfo);
