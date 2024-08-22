@@ -56,15 +56,16 @@ class Program
         var camera = new Camera(fieldOfView: 50, Transformation.Default);
         var culling = new Interval(min: 0.1, max: 20);
         var random = new Random(0);
-        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, 16);
+        var samples = 32;
+        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, samples);
         
         // hit F12
         renderer.Render(in option);
 
         // setup outputs
-        using var diffuseWriter = new StreamWriter("outDiffuse.ppm");
-        using var normalWriter = new StreamWriter("outNormal.ppm");
-        using var zWriter = new StreamWriter("outZ.ppm");
+        using var diffuseWriter = new StreamWriter($"outDiffuse{samples}.ppm");
+        using var normalWriter = new StreamWriter($"outNormal{samples}.ppm");
+        using var zWriter = new StreamWriter($"outZ{samples}.ppm");
         framebuffer.ExportToPPM(diffuseWriter, normalWriter, zWriter);
     }
 }

@@ -11,7 +11,7 @@ public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in I
     public readonly IEnumerable<IHittable> Hittables = hittables;
     public readonly IEnumerable<ILight> Lights = lights;
     public readonly Random Random = random;
-    public readonly int MaxSamples = maxSamples;
+    public readonly int MaxSamples = (int)Math.Ceiling(Math.Sqrt(maxSamples));
 }
 
 public interface IRenderer
@@ -32,8 +32,8 @@ public class Renderer : IRenderer
 
         var minCull = option.Culling.Min;
         var maxCull = option.Culling.Max;
-        
-        var maxSamples = option.MaxSamples;
+
+        var maxSamples = option.MaxSamples * option.MaxSamples;
 
         for (var rasterY = 0; rasterY < height; rasterY++)
         {
@@ -44,10 +44,10 @@ public class Renderer : IRenderer
                 ref var diffuseRaster = ref framebuffer.DiffuseBuffer[index];
                 ref var normalRaster = ref framebuffer.NormalBuffer[index];
                 ref var zRaster = ref framebuffer.ZBuffer[index];
-                
+
                 for (var i = 0; i < maxSamples; i++)
                 {
-                    var cameraRay = GenerateCameraRay(rasterX, rasterY, in option);
+                    var cameraRay = GenerateCameraRay(rasterX, rasterY, i, in option);
                     if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                     {
                         diffuseRaster += SampleDirect(in info, hittables, lights) + SampleIndirect(in info, hittables, lights);
@@ -61,7 +61,7 @@ public class Renderer : IRenderer
                         zRaster += Vector.Zero;
                     }
                 }
-                
+
                 diffuseRaster /= maxSamples;
                 normalRaster /= maxSamples;
                 zRaster /= maxSamples;
@@ -100,7 +100,7 @@ public class Renderer : IRenderer
         return Vector.Zero;
     }
 
-    private static Ray GenerateCameraRay(double rasterX, double rasterY, in RenderOption option)
+    private static Ray GenerateCameraRay(double rasterX, double rasterY, int i, in RenderOption option)
     {
         // conventionally:
         // - focus length is 1
@@ -114,12 +114,14 @@ public class Renderer : IRenderer
         var aspectRatio = (double)framebuffer.Width / framebuffer.Height;
 
         // move random range to -0.5, 0.5
-        var randomX = option.Random.NextDouble() - 0.5;
-        var randomY = option.Random.NextDouble() - 0.5;
 
-        // move raster to the center, then add randomness
-        rasterX += 0.5 + randomX;
-        rasterY += 0.5 + randomY;
+        var maxSamples = (double)option.MaxSamples;
+        var halfDistance = 0.5 / maxSamples / 2;
+        var xoff = i % maxSamples / maxSamples;
+        var yoff = Math.Floor(i / maxSamples) / maxSamples;
+
+        rasterX += xoff + halfDistance;
+        rasterY += yoff + halfDistance;
 
         var xndc = rasterX / framebuffer.Width;
         var yndc = rasterY / framebuffer.Height;
