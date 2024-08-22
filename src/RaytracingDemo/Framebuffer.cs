@@ -19,7 +19,7 @@ public class Framebuffer(int width, int height)
             for (var x = 0; x < Width; x++)
             {
                 var index = x + y * Width;
-                diffuseWriter.WriteColor(in DiffuseBuffer[index]);
+                diffuseWriter.WriteColor(DiffuseBuffer[index].ToGamma());
                 normalWriter.WriteColor(in NormalBuffer[index]);
                 zWriter.WriteColor(in ZBuffer[index]);
             }

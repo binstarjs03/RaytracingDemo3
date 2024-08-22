@@ -11,19 +11,19 @@ class Program
         // populate the scene
         Vector[] positions =
         {
-            new(-1, -1, -1),
-            new( 1, -1, -1),
-            new( 0,  1, -1),
+            new(-1, -1, -2),
+            new( 1, -1, -2),
+            new( 0,  1, -2),
 
-            new(-10, -1, -10),
-            new( 10, -1, -10),
-            new( 10, -1,  10),
-            new(-10, -1,  10),
+            new(-10, -0.5, -10),
+            new( 10, -0.5, -10),
+            new( 10, -0.5,  10),
+            new(-10, -0.5,  10),
 
         };
         int[] indices =
         {
-            0, 1, 2,
+            // 0, 1, 2,
             5, 4, 3,
             3, 6, 5,
         };
@@ -47,13 +47,14 @@ class Program
         var multiplier = 40;
         var framebuffer = new Framebuffer(width: 10 * multiplier, height: 10 * multiplier);
         var renderer = new Renderer();
-        var camera = new Camera(framebuffer, fieldOfView: 60, Transformation.Default);
+        var camera = new Camera(framebuffer, fieldOfView: 50, Transformation.Default);
         var culling = new Interval(min: 0.1, max: 20);
         var option = new RenderOption(culling);
 
         var lights = new List<ILight>
         {
-            new PointLight(new Vector(0.6, 1.0, 0), Vector.Unit, 1)
+            new PointLight(new Vector(0.6, 1.0, 0.0), Vector.Unit, 1.5),
+            // new PointLight(new Vector(-1, 1, 1), Vector.Unit, 0.5),
         };
 
         // hit F12
