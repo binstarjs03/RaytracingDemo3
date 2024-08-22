@@ -3,13 +3,14 @@ using System.Collections.Generic;
 
 namespace RaytracingDemo;
 
-public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in Interval culling, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights, int maxSamples)
+public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in Interval culling, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights, Random random, int maxSamples)
 {
     public readonly Camera Camera = camera;
     public readonly Framebuffer Framebuffer = framebuffer;
     public readonly Interval Culling = culling;
     public readonly IEnumerable<IHittable> Hittables = hittables;
     public readonly IEnumerable<ILight> Lights = lights;
+    public readonly Random Random = random;
     public readonly int MaxSamples = maxSamples;
 }
 
@@ -25,34 +26,48 @@ public class Renderer : IRenderer
         ref readonly var framebuffer = ref option.Framebuffer;
         var hittables = option.Hittables;
         var lights = option.Lights;
-        
+
         var width = framebuffer.Width;
         var height = framebuffer.Height;
-        
+
         var minCull = option.Culling.Min;
         var maxCull = option.Culling.Max;
         
+        var maxSamples = option.MaxSamples;
+
         for (var rasterY = 0; rasterY < height; rasterY++)
+        {
+            Console.WriteLine($"Scanlines remaining: {height - rasterY}");
             for (var rasterX = 0; rasterX < width; rasterX++)
             {
                 var index = rasterX + rasterY * framebuffer.Height;
                 ref var diffuseRaster = ref framebuffer.DiffuseBuffer[index];
                 ref var normalRaster = ref framebuffer.NormalBuffer[index];
                 ref var zRaster = ref framebuffer.ZBuffer[index];
-                var cameraRay = GenerateCameraRay(rasterX, rasterY, in option);
-                if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
+                
+                for (var i = 0; i < maxSamples; i++)
                 {
-                    diffuseRaster = SampleDirect(in info, hittables, lights) + SampleIndirect(in info, hittables, lights);
-                    normalRaster = (info.Normal + 1) * 0.5;
-                    zRaster = 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
+                    var cameraRay = GenerateCameraRay(rasterX, rasterY, in option);
+                    if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
+                    {
+                        diffuseRaster += SampleDirect(in info, hittables, lights) + SampleIndirect(in info, hittables, lights);
+                        normalRaster += (info.Normal + 1) * 0.5;
+                        zRaster += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
+                    }
+                    else
+                    {
+                        diffuseRaster += new Vector((double)rasterX / width, (double)rasterY / framebuffer.Height, 0);
+                        normalRaster += Vector.Zero;
+                        zRaster += Vector.Zero;
+                    }
                 }
-                else
-                {
-                    diffuseRaster = new Vector((double)rasterX / width, (double)rasterY / framebuffer.Height, 0);
-                    normalRaster = Vector.Zero;
-                    zRaster = Vector.Zero;
-                }
+                
+                diffuseRaster /= maxSamples;
+                normalRaster /= maxSamples;
+                zRaster /= maxSamples;
             }
+        }
+        Console.WriteLine("Finished");
     }
 
     private static bool TryIntersectNearest(in Ray ray, in Interval cullLimit, IEnumerable<IHittable> hittables, out HitInfo info)
@@ -85,7 +100,7 @@ public class Renderer : IRenderer
         return Vector.Zero;
     }
 
-    private static Ray GenerateCameraRay(int rasterX, int rasterY, in RenderOption option)
+    private static Ray GenerateCameraRay(double rasterX, double rasterY, in RenderOption option)
     {
         // conventionally:
         // - focus length is 1
@@ -98,8 +113,16 @@ public class Renderer : IRenderer
         var screenLen = Math.Tan(fovrad / 2) * 2;
         var aspectRatio = (double)framebuffer.Width / framebuffer.Height;
 
-        var xndc = (rasterX + 0.5) / framebuffer.Width;
-        var yndc = (rasterY + 0.5) / framebuffer.Height;
+        // move random range to -0.5, 0.5
+        var randomX = option.Random.NextDouble() - 0.5;
+        var randomY = option.Random.NextDouble() - 0.5;
+
+        // move raster to the center, then add randomness
+        rasterX += 0.5 + randomX;
+        rasterY += 0.5 + randomY;
+
+        var xndc = rasterX / framebuffer.Width;
+        var yndc = rasterY / framebuffer.Height;
 
         var xscreen = (xndc * 2 - 1) * screenLen * aspectRatio;
         var yscreen = (1 - yndc * 2) * screenLen;

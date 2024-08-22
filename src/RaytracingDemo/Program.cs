@@ -55,7 +55,8 @@ class Program
         var renderer = new Renderer();
         var camera = new Camera(fieldOfView: 50, Transformation.Default);
         var culling = new Interval(min: 0.1, max: 20);
-        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, 10);
+        var random = new Random(0);
+        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, 16);
         
         // hit F12
         renderer.Render(in option);
