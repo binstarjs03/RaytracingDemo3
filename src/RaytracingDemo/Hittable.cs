@@ -49,8 +49,8 @@ public class TriMesh : IHittable
 
     public TriMesh(Vector[] positions, int[] indices)
     {
-        if (positions.Length % 3 != 0)
-            throw new ArgumentException("Vertex array must be divisible by 3", nameof(positions));
+        if (positions.Length < 3)
+            throw new ArgumentException("Vertex array must be larger than 3", nameof(positions));
         if (indices.Length % 3 != 0)
             throw new ArgumentException("Index array must be divisible by 3", nameof(positions));
         _positions = positions;
