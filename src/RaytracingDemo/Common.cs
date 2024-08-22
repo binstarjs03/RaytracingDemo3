@@ -9,5 +9,5 @@ public static class Common
         return degree * Math.PI / 180;
     }
 
-    public static readonly double Bias = 0.001;
+    public static readonly double Epsilon = 0.001;
 }
