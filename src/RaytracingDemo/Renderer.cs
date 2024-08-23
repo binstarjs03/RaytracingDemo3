@@ -42,33 +42,30 @@ public class Renderer : IRenderer
             for (var rasterX = 0; rasterX < width; rasterX++)
             {
                 var index = rasterX + rasterY * framebuffer.Height;
-                ref var diffuseRaster = ref framebuffer.DiffuseBuffer[index];
-                ref var normalRaster = ref framebuffer.NormalBuffer[index];
-                ref var zRaster = ref framebuffer.ZBuffer[index];
+                ref var diffuseDirect = ref framebuffer.DiffuseDirect[index];
+                ref var diffuseIndirect = ref framebuffer.DiffuseIndirect[index];
+                ref var diffuseAlbedo = ref framebuffer.DiffuseAlbedo[index];
+                ref var normal = ref framebuffer.Normal[index];
+                ref var z = ref framebuffer.Z[index];
 
                 for (var i = 0; i < maxSamples; i++)
                 {
                     var cameraRay = GenerateCameraRay(rasterX, rasterY, i, in option);
                     if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                     {
-                        var direct = SampleDirect(in info, hittables, lights);
-                        var indirect = SampleIndirect(in option, in cameraRay, in info, info.Material.Albedo, depth: 0);
-                        var attenuation = (direct + indirect) * info.Material.Albedo;
-                        diffuseRaster += attenuation;
-                        normalRaster += (info.Normal + 1) * 0.5;
-                        zRaster += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
-                    }
-                    else
-                    {
-                        diffuseRaster += new Vector((double)rasterX / width, (double)rasterY / framebuffer.Height, 0);
-                        normalRaster += Vector.Zero;
-                        zRaster += Vector.Zero;
+                        diffuseDirect += SampleDirect(in info, hittables, lights);
+                        diffuseIndirect += SampleIndirect(in option, in cameraRay, in info, info.Material.Albedo, depth: 0);
+                        diffuseAlbedo += info.Material.Albedo;
+                        normal += (info.Normal + 1) * 0.5;
+                        z += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
                     }
                 }
 
-                diffuseRaster /= maxSamples;
-                normalRaster /= maxSamples;
-                zRaster /= maxSamples;
+                diffuseDirect /= maxSamples;
+                diffuseIndirect /= maxSamples;
+                diffuseAlbedo /= maxSamples;
+                normal /= maxSamples;
+                z /= maxSamples;
             }
         }
         Console.WriteLine("Finished");
@@ -107,12 +104,11 @@ public class Renderer : IRenderer
         // goes into infinity
         if (!TryIntersectNearest(in scattered, option.Culling, option.Hittables, out var scatterInfo))
             return Vector.Zero;
-        var localAttenuation = attenuation * scatterInfo.Material.Albedo;
         var direct = SampleDirect(in scatterInfo, option.Hittables, option.Lights);
         var indirect = depth < option.MaxBounces
-            ? SampleIndirect(in option, in scattered, in scatterInfo, localAttenuation, depth + 1)
+            ? SampleIndirect(in option, in scattered, in scatterInfo, scatterInfo.Material.Albedo, depth + 1)
             : Vector.Zero;
-        return (direct + indirect) * localAttenuation;
+        return (direct + indirect) * scatterInfo.Material.Albedo;
 
     }
 

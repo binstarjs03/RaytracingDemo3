@@ -65,11 +65,6 @@ class Program
 
         // hit F12
         renderer.Render(in option);
-
-        // setup outputs
-        using var diffuseWriter = new StreamWriter($"outDiffuse{samples}.ppm");
-        using var normalWriter = new StreamWriter($"outNormal{samples}.ppm");
-        using var zWriter = new StreamWriter($"outZ{samples}.ppm");
-        framebuffer.ExportToPPM(diffuseWriter, normalWriter, zWriter);
+        framebuffer.ExportToPPM(samples.ToString());
     }
 }
