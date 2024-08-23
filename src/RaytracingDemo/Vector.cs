@@ -59,7 +59,7 @@ public readonly struct Vector(double x, double y, double z) : IEquatable<Vector>
     {
         return left.Equals(right);
     }
-    
+
     public static bool operator !=(Vector left, Vector right)
     {
         return !(left == right);
@@ -126,7 +126,7 @@ public readonly struct Vector(double x, double y, double z) : IEquatable<Vector>
 
 public static class VectorUtils
 {
-    public static Vector NextVectorOnHemisphere(this Random random, in Vector normal)
+    public static Vector NextUnitVectorOnHemisphere(this Random random, in Vector normal)
     {
         var theta = Math.Acos(1 - random.NextDouble()); // random longitude
         var phi = Math.PI * 2 * random.NextDouble(); // random latitude
@@ -139,6 +139,6 @@ public static class VectorUtils
         var t = Vector.Cross(in n, n != up ? up : right);
         var b = Vector.Cross(in n, in t);
         var result = t * x + y * n + z * b;
-        return result;
+        return result.Normalized;
     }
 }
