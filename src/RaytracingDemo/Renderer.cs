@@ -51,9 +51,9 @@ public class Renderer : IRenderer
                     var cameraRay = GenerateCameraRay(rasterX, rasterY, i, in option);
                     if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                     {
-                        var attenuation = (SampleDirect(in info, hittables, lights)
-                                        + SampleIndirect(in option, in cameraRay, in info, depth: 0))
-                                        * info.Material.Albedo;
+                        var direct = SampleDirect(in info, hittables, lights);
+                        var indirect = SampleIndirect(in option, in cameraRay, in info, info.Material.Albedo, depth: 0);
+                        var attenuation = (direct + indirect) * info.Material.Albedo;
                         diffuseRaster += attenuation;
                         normalRaster += (info.Normal + 1) * 0.5;
                         zRaster += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
@@ -99,10 +99,20 @@ public class Renderer : IRenderer
         return finalAttenuation;
     }
 
-    private static Vector SampleIndirect(in RenderOption option, in Ray ray, in HitInfo info, int depth)
+    private static Vector SampleIndirect(in RenderOption option, in Ray ray, in HitInfo info, in Vector attenuation, int depth)
     {
-        // if (!info.Material.TryScatter(in ray, in info, out var scattered, option.Random))
-        return Vector.Zero;
+        // absorbed completely
+        if (!info.Material.TryScatter(in ray, in info, out var scattered, option.Random))
+            return Vector.Zero;
+        // goes into infinity
+        if (!TryIntersectNearest(in scattered, option.Culling, option.Hittables, out var scatterInfo))
+            return Vector.Zero;
+        var localAttenuation = attenuation * scatterInfo.Material.Albedo;
+        var direct = SampleDirect(in scatterInfo, option.Hittables, option.Lights);
+        var indirect = depth < option.MaxBounces
+            ? SampleIndirect(in option, in scattered, in scatterInfo, localAttenuation, depth + 1)
+            : Vector.Zero;
+        return (direct + indirect) * localAttenuation;
 
     }
 

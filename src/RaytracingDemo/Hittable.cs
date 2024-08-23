@@ -33,7 +33,8 @@ public class Sphere(Vector center, double radius, IMaterial material) : IHittabl
         var hitpoint = incoming.At(intersection);
         var normal = (hitpoint - _center) / _radius;
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, distance: intersection, isFront, _material);
+        // add small bias to avoid hitpoint inside/below surface error
+        info = new HitInfo(hitpoint + normal * Common.Epsilon, normal, distance: intersection, isFront, _material);
         return true;
     NotHit:
         info = default;

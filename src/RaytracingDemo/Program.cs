@@ -61,7 +61,7 @@ class Program
         var culling = new Interval(min: 0.1, max: 20);
         var random = new Random(0);
         var samples = 16;
-        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, samples, 8);
+        var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, samples, 4);
 
         // hit F12
         renderer.Render(in option);
