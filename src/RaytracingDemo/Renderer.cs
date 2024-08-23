@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RaytracingDemo;
 
@@ -92,7 +93,7 @@ public class Renderer : IRenderer
         var finalAttenuation = Vector.Zero;
         foreach (var light in lights)
             if (light.CanIlluminate(info.Hitpoint, hittables, out var sample))
-                finalAttenuation += sample.Attenuation * Vector.Dot(info.Normal, sample.Direction);
+                finalAttenuation += sample.Attenuation * Math.Clamp(Vector.Dot(info.Normal, sample.Direction), 0, double.PositiveInfinity);
         return finalAttenuation;
     }
 
