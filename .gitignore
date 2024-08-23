@@ -12,5 +12,7 @@ Release
 *.log
 *.ppm
 *.ilk
+*.blend1
+*.jpg
 
 tasks.json
