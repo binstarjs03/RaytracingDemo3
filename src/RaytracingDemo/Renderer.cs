@@ -136,8 +136,8 @@ public class Renderer : IRenderer
         rasterX += xoff + halfDistance;
         rasterY += yoff + halfDistance;
 
-        var xndc = rasterX / framebuffer.Width;
-        var yndc = rasterY / framebuffer.Height;
+        var xndc = rasterX / framebuffer.Width + camera.ShiftX;
+        var yndc = rasterY / framebuffer.Height + camera.ShiftY;
 
         var xscreen = (xndc * 2 - 1) * screenLen * aspectRatio;
         var yscreen = (1 - yndc * 2) * screenLen;

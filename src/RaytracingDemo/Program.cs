@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 namespace RaytracingDemo;
@@ -57,7 +57,7 @@ class Program
         var multiplier = 40;
         var framebuffer = new Framebuffer(width: 10 * multiplier, height: 10 * multiplier);
         var renderer = new Renderer();
-        var camera = new Camera(fieldOfView: 50, Transformation.Default);
+        var camera = new Camera(fieldOfView: 50, 0, 0, Transformation.Default);
         var culling = new Interval(min: 0.1, max: 20);
         var random = new Random(0);
         var samples = 64;
