@@ -14,12 +14,14 @@ public class Framebuffer(int width, int height)
 
     public void ExportToPPM(string postfix)
     {
-        using var diffuseDirect = new StreamWriter($"diffuseDirect{postfix}.ppm");
-        using var diffuseIndirect = new StreamWriter($"diffuseIndirect{postfix}.ppm");
-        using var diffuseAlbedo = new StreamWriter($"diffuseAlbedo{postfix}.ppm");
-        using var normal = new StreamWriter($"normal{postfix}.ppm");
-        using var z = new StreamWriter($"z{postfix}.ppm");
-        using var combined = new StreamWriter($"combined{postfix}.ppm");
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(path);
+        using var diffuseDirect = new StreamWriter(Path.Combine(path, $"diffuseDirect{postfix}.ppm"));
+        using var diffuseIndirect = new StreamWriter(Path.Combine(path, $"diffuseIndirect{postfix}.ppm"));
+        using var diffuseAlbedo = new StreamWriter(Path.Combine(path, $"diffuseAlbedo{postfix}.ppm"));
+        using var normal = new StreamWriter(Path.Combine(path, $"normal{postfix}.ppm"));
+        using var z = new StreamWriter(Path.Combine(path, $"z{postfix}.ppm"));
+        using var combined = new StreamWriter(Path.Combine(path, $"combined{postfix}.ppm"));
         WriteHeader(diffuseDirect);
         WriteHeader(diffuseIndirect);
         WriteHeader(diffuseAlbedo);

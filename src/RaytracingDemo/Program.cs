@@ -61,11 +61,11 @@ class Program
         var culling = new Interval(min: 0.1, max: 20);
         var random = new Random(0);
         var samples = 64;
-        var bounces = 4;
+        var bounces = 1;
         var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, samples, bounces);
 
         // hit F12
         renderer.Render(in option);
-        framebuffer.ExportToPPM($"s{samples}b{bounces}");
+        framebuffer.ExportToPPM($"-s{samples}b{bounces}");
     }
 }
