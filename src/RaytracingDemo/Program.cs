@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 namespace RaytracingDemo;
@@ -33,9 +33,9 @@ class Program
         };
         var hittables = new List<IHittable>()
         {
-            new Sphere(new Vector(0.0, 0.0, -1.0), radius: 0.5, bluishMat),
-            new Sphere(new Vector(0.5, 0.0, -1.0), radius: 0.25, reddishMat),
-            new TriMesh(positions, indices, grayMat),
+            new Sphere(new Vector(0.0, 0.0, -1.0), radius: 0.5, bluishMat, "Blue"),
+            new Sphere(new Vector(0.5, 0.0, -1.0), radius: 0.25, reddishMat, "Red"),
+            new TriMesh(positions, indices, grayMat, "Floor"),
         };
 
         // for (int i = 0; i < 100; i++)
@@ -50,7 +50,7 @@ class Program
         var lights = new List<ILight>
         {
             new PointLight(new Vector(0.6, 1.0, 0.0), Vector.Unit, 1.5),
-            // new PointLight(new Vector(-1, 1, 1), Vector.Unit, 0.5),
+            // new PointLight(new Vector(1, 1, -1), Vector.Unit, 1),
         };
 
         // setup render config
@@ -60,8 +60,8 @@ class Program
         var camera = new Camera(fieldOfView: 50, 0, 0, Transformation.Default);
         var culling = new Interval(min: 0.1, max: 20);
         var random = new Random(0);
-        var samples = 64;
-        var bounces = 1;
+        var samples = 128;
+        var bounces = 4;
         var option = new RenderOption(camera, framebuffer, in culling, hittables, lights, random, samples, bounces);
 
         // hit F12
