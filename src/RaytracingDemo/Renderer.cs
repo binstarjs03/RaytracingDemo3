@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RaytracingDemo;
 
-public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in Interval culling, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights, Random random, int maxSamples)
+public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in Interval culling, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights, Random random, int maxSamples, int maxBounces)
 {
     public readonly Camera Camera = camera;
     public readonly Framebuffer Framebuffer = framebuffer;
@@ -12,6 +12,7 @@ public readonly struct RenderOption(Camera camera, Framebuffer framebuffer, in I
     public readonly IEnumerable<ILight> Lights = lights;
     public readonly Random Random = random;
     public readonly int MaxSamples = (int)Math.Ceiling(Math.Sqrt(maxSamples));
+    public readonly int MaxBounces = maxBounces;
 }
 
 public interface IRenderer
@@ -50,7 +51,10 @@ public class Renderer : IRenderer
                     var cameraRay = GenerateCameraRay(rasterX, rasterY, i, in option);
                     if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                     {
-                        diffuseRaster += SampleDirect(in info, hittables, lights) + SampleIndirect(in info, hittables, lights);
+                        var attenuation = (SampleDirect(in info, hittables, lights)
+                                        + SampleIndirect(in option, in cameraRay, in info, depth: 0))
+                                        * info.Material.Albedo;
+                        diffuseRaster += attenuation;
                         normalRaster += (info.Normal + 1) * 0.5;
                         zRaster += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
                     }
@@ -95,9 +99,11 @@ public class Renderer : IRenderer
         return finalAttenuation;
     }
 
-    private static Vector SampleIndirect(in HitInfo info, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights)
+    private static Vector SampleIndirect(in RenderOption option, in Ray ray, in HitInfo info, int depth)
     {
+        // if (!info.Material.TryScatter(in ray, in info, out var scattered, option.Random))
         return Vector.Zero;
+
     }
 
     private static Ray GenerateCameraRay(double rasterX, double rasterY, int i, in RenderOption option)
