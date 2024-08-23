@@ -54,9 +54,9 @@ public class Renderer : IRenderer
                     var cameraRay = GenerateCameraRay(rasterX, rasterY, i, in option);
                     if (TryIntersectNearest(in cameraRay, in option.Culling, hittables, out var info))
                     {
-                        diffuseDirect += SampleDirect(in info, hittables, lights);
-                        diffuseIndirect += SampleIndirect(in option, in cameraRay, in info, info.Material.Albedo, depth: 0);
-                        diffuseAlbedo += info.Material.Albedo;
+                        diffuseDirect += SampleDirect(in info, in option);
+                        diffuseIndirect += SampleIndirect(in option, in cameraRay, in info, depth: 0);
+                        diffuseAlbedo += info.Hittable.Material.Albedo;
                         normal += (info.Normal + 1) * 0.5;
                         z += 1 - (-info.Hitpoint.Z - minCull) / (maxCull - minCull);
                     }
@@ -88,29 +88,28 @@ public class Renderer : IRenderer
         return wasHit;
     }
 
-    private static Vector SampleDirect(in HitInfo info, IEnumerable<IHittable> hittables, IEnumerable<ILight> lights)
+    private static Vector SampleDirect(in HitInfo info, in RenderOption option)
     {
         var finalAttenuation = Vector.Zero;
-        foreach (var light in lights)
-            if (light.CanIlluminate(info.Hitpoint, hittables, out var sample))
+        foreach (var light in option.Lights)
+            if (light.CanIlluminate(info.Hitpoint, option.Hittables, out var sample))
                 finalAttenuation += sample.Attenuation * Math.Clamp(Vector.Dot(info.Normal, sample.Direction), 0, double.PositiveInfinity);
         return finalAttenuation;
     }
 
-    private static Vector SampleIndirect(in RenderOption option, in Ray ray, in HitInfo info, in Vector attenuation, int depth)
+    private static Vector SampleIndirect(in RenderOption option, in Ray incoming, in HitInfo info, int depth)
     {
         // absorbed completely
-        if (!info.Material.TryScatter(in ray, in info, out var scattered, option.Random))
+        if (!info.Hittable.Material.TryScatter(in incoming, in info, out var scattered, option.Random))
             return Vector.Zero;
         // goes into infinity
-        if (!TryIntersectNearest(in scattered, option.Culling, option.Hittables, out var scatterInfo))
+        if (!TryIntersectNearest(in scattered, new Interval(double.Epsilon, option.Culling.Max), option.Hittables, out var scatterInfo))
             return Vector.Zero;
-        var direct = SampleDirect(in scatterInfo, option.Hittables, option.Lights);
+        var direct = SampleDirect(in scatterInfo, in option);
         var indirect = depth < option.MaxBounces
-            ? SampleIndirect(in option, in scattered, in scatterInfo, scatterInfo.Material.Albedo, depth + 1)
+            ? SampleIndirect(in option, in scattered, in scatterInfo, depth + 1)
             : Vector.Zero;
-        return (direct + indirect) * scatterInfo.Material.Albedo;
-
+        return (direct + indirect) * scatterInfo.Hittable.Material.Albedo;
     }
 
     private static Ray GenerateCameraRay(double rasterX, double rasterY, int i, in RenderOption option)

@@ -4,14 +4,17 @@ namespace RaytracingDemo;
 
 public interface IHittable
 {
+    IMaterial Material { get; }
     bool Hit(in Ray incoming, in Interval limit, out HitInfo info);
 }
 
-public class Sphere(Vector center, double radius, IMaterial material) : IHittable
+public class Sphere(Vector center, double radius, IMaterial material, string name) : IHittable
 {
     private readonly Vector _center = center;
     private readonly double _radius = radius;
-    private readonly IMaterial _material = material;
+    public IMaterial Material { get; set; } = material;
+
+    public string Name { get; set; } = name;
 
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
@@ -34,7 +37,7 @@ public class Sphere(Vector center, double radius, IMaterial material) : IHittabl
         var normal = (hitpoint - _center) / _radius;
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
         // add small bias to avoid hitpoint inside/below surface error
-        info = new HitInfo(hitpoint + normal * Common.Epsilon, normal, distance: intersection, isFront, _material);
+        info = new HitInfo(hitpoint + normal * Common.Epsilon, normal, distance: intersection, isFront, this);
         return true;
     NotHit:
         info = default;
@@ -46,10 +49,9 @@ public class TriMesh : IHittable
 {
     private readonly Vector[] _positions;
     private readonly int[] _indices;
-    private readonly IMaterial _material;
     private readonly BoundingBox _boundingBox;
 
-    public TriMesh(Vector[] positions, int[] indices, IMaterial material)
+    public TriMesh(Vector[] positions, int[] indices, IMaterial material, string name)
     {
         if (positions.Length < 3)
             throw new ArgumentException("Vertex array must be larger than 3", nameof(positions));
@@ -57,9 +59,12 @@ public class TriMesh : IHittable
             throw new ArgumentException("Index array must be divisible by 3", nameof(positions));
         _positions = positions;
         _indices = indices;
-        _material = material;
+        Material = material;
         _boundingBox = CalculateBoundingBox(positions);
+        Name = name;
     }
+    
+    public IMaterial Material { get; set; }
 
     private static BoundingBox CalculateBoundingBox(Vector[] positions)
     {
@@ -88,6 +93,8 @@ public class TriMesh : IHittable
         return new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
+    public string Name { get; set; }
+
     public bool Hit(in Ray incoming, in Interval limit, out HitInfo info)
     {
         if (!_boundingBox.Intersect(in incoming))
@@ -105,7 +112,7 @@ public class TriMesh : IHittable
             ref var p0 = ref _positions[_indices[indexStart + 0]];
             ref var p1 = ref _positions[_indices[indexStart + 1]];
             ref var p2 = ref _positions[_indices[indexStart + 2]];
-            if (Triangle.Hit(in incoming, in localLimit, in p0, in p1, in p2, out var tempInfo, _material))
+            if (Triangle.Hit(in incoming, in localLimit, in p0, in p1, in p2, out var tempInfo, this))
             {
                 localLimit = new Interval(localLimit.Min, localInfo.Distance);
                 wasHit = true;
@@ -124,7 +131,7 @@ public static class Triangle
         return Vector.Cross(p1 - p0, p2 - p0).Normalized;
     }
 
-    public static bool Hit(in Ray incoming, in Interval limit, in Vector p0, in Vector p1, in Vector p2, out HitInfo info, IMaterial material)
+    public static bool Hit(in Ray incoming, in Interval limit, in Vector p0, in Vector p1, in Vector p2, out HitInfo info, IHittable hittable)
     {
         var normal = Normal(in p0, in p1, in p2);
 
@@ -167,7 +174,7 @@ public static class Triangle
             goto NoHit;
 
         var isFront = Vector.Dot(in incoming.Direction, in normal) < 0;
-        info = new HitInfo(hitpoint, normal, intersection, isFront, material);
+        info = new HitInfo(hitpoint, normal, intersection, isFront, hittable);
         return true;
 
     NoHit:
